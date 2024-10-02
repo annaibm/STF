@@ -94,6 +94,14 @@ public class StfEnvironmentCore {
 			this.testRoots.add(defaultTestRoot);
 			invocationProperties.put(Stf.ARG_TEST_ROOT.getName(), defaultTestRoot.getSpec());
 		}
+
+		try {
+			String javaHome = System.getProperty("java.home");
+			File javaLibDir = new File(javaHome, "../lib");
+			this.testRoots.add(new DirectoryRef(javaLibDir.getCanonicalPath()));  // Add ../lib directory
+		} catch (IOException e) {
+			throw new RuntimeException("Failed to add Java lib directory to test roots", e);
+		}
 		
 		// Work out where the prereqs are
 		if (!getProperty(Stf.ARG_SYSTEMTEST_PREREQS).isEmpty()) {

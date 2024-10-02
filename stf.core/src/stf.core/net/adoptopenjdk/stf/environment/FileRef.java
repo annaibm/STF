@@ -15,6 +15,7 @@
 package net.adoptopenjdk.stf.environment;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
