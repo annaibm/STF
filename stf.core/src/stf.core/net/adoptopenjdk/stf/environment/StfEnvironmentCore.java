@@ -98,7 +98,11 @@ public class StfEnvironmentCore {
 		try {
 			String javaHome = System.getProperty("java.home");
 			File javaLibDir = new File(javaHome, "../lib");
-			this.testRoots.add(new DirectoryRef(javaLibDir.getCanonicalPath()));  // Add ../lib directory
+			if (javaLibDir.exists() && javaLibDir.isDirectory()) {
+				this.testRoots.add(new DirectoryRef(javaLibDir.getCanonicalPath()));  // Add ../lib directory
+			} else {
+				System.out.println("Java lib directory does not exist: " + javaLibDir.getCanonicalPath());
+			}
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to add Java lib directory to test roots", e);
 		}
