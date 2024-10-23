@@ -97,6 +97,7 @@ public class StfEnvironmentCore {
 
 		try {
 			String javaHome = System.getProperty("java.home");
+			System.out.println("Java home:" + javaHome);
 			File javaLibDir = new File(javaHome, "../lib");
 			if (javaLibDir.exists() && javaLibDir.isDirectory()) {
 				this.testRoots.add(new DirectoryRef(javaLibDir.getCanonicalPath()));  // Add ../lib directory
