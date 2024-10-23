@@ -100,6 +100,7 @@ public class StfEnvironmentCore {
 			File javaLibDir = new File(javaHome, "../lib");
 			if (javaLibDir.exists() && javaLibDir.isDirectory()) {
 				this.testRoots.add(new DirectoryRef(javaLibDir.getCanonicalPath()));  // Add ../lib directory
+				System.out.println("Java lib directory does exist: " + javaLibDir.getCanonicalPath());
 			} else {
 				System.out.println("Java lib directory does not exist: " + javaLibDir.getCanonicalPath());
 			}
