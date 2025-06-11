@@ -245,9 +245,11 @@ BUILD_COMMAND:=$(BUILD_COMMAND) -Djava_home=$(JAVA_HOME)
 # and on unix
 # stf.pl -java-args="-Xjit:counts=\"- - - - - - 1 1 1 1000 250 250 - - - 10000 100000 10000\" -Xgcpolicy:optthruput"
 
+JAVA_ARGS += -DNATIVE_TEST_LIBS=$(NATIVE_TEST_LIBS) 
 ifneq (,$(JAVA_ARGS))
   JAVA_ARGS_ARG:=-java-args="$(subst ",$(ESC_DQ),$(JAVA_ARGS))"
 endif
+
 
 ifeq ($(RM_PASS),1)
     RM_PASS_ARG:=-rm-pass
