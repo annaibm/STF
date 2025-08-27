@@ -129,9 +129,7 @@ limitations under the License.
 		Same as configure target except prereqs are not installed if missing.
 	-->
 	<target name="check-prereqs" depends="setup-java-properties" unless="check_prereqs_run">
-		<ant target="run-check-prereqs" inheritAll="true">
-            <property name="setup_java_properties_run" value="true"/>
-        </ant> 
+		<antcall target="run-check-prereqs"/>
 		<property name="check_prereqs_run" value="true"/>
 	</target>
 	<target name="run-check-prereqs" depends="check-for-ant, print-ant-location, print-ant-error,
