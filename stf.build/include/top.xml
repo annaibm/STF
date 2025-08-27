@@ -62,7 +62,6 @@ limitations under the License.
 		On pre Java 9 non IBM zOS java, the ant property java.home points at JAVA_HOME/jre.
 	-->
 	<target name="setup-java-properties" unless="setup_java_properties_run">
-
 		<echo message="java_home is ${java_home}"/>
 		<echo message="java.home is ${java.home}"/>
 		<condition property="java_home" value="${java.home}">
@@ -130,7 +129,7 @@ limitations under the License.
 		Same as configure target except prereqs are not installed if missing.
 	-->
 	<target name="check-prereqs" depends="setup-java-properties" unless="check_prereqs_run">
-		<antcall target="run-check-prereqs"/>
+		<ant target="run-check-prereqs" inheritAll="true"/>
 		<property name="check_prereqs_run" value="true"/>
 	</target>
 	<target name="run-check-prereqs" depends="check-for-ant, print-ant-location, print-ant-error,
