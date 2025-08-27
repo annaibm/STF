@@ -62,7 +62,7 @@ limitations under the License.
 		On pre Java 9 non IBM zOS java, the ant property java.home points at JAVA_HOME/jre.
 	-->
 	<target name="setup-java-properties" unless="setup_java_properties_run">
-		<property name="setup_java_properties_run" value="true"/>
+
 		<echo message="java_home is ${java_home}"/>
 		<echo message="java.home is ${java.home}"/>
 		<condition property="java_home" value="${java.home}">
@@ -92,6 +92,7 @@ limitations under the License.
 		<echo message="java_bindir set to ${java_bindir}"/>
 		<property name="java_compiler" location="${java_bindir}/javac${exe_suffix}"/>
 		<echo message="java_compiler set to ${java_compiler}"/>
+        <property name="setup_java_properties_run" value="true"/>
 	</target>
 
 	<!-- Setup properties to allow projects to use a copy of Visual Studio for compiling native test cases.  -->
