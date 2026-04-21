@@ -754,36 +754,25 @@ sub check_free_space {
 		print "DEBUG: End of command output\n";
 
 		foreach my $line ( @df_output ) {
-			# Try to match English format first, then fall back to locale-specific formats
-			# This handles cases where chcp doesn't work or output is still in native locale
-			if ( $line =~ m/.*bytes\s+free.*|.*可用字节.*|.*バイト.*|.*사용.*가능.*/ ) {
-				print "DEBUG: Found bytes/locale-specific line: $line";
+			# Match lines that likely contain free space information
+			# Look for patterns with "Dir(s)" or large numbers (indicating bytes)
+			if ( $line =~ m/Dir\(s\)|[\d,]{10,}/ ) {
+				print "DEBUG: Found potential free space line: $line";
 
-				# Try English format: "3 Dir(s)  214,264,049,664 bytes free"
+				# Try English format first: "3 Dir(s)  214,264,049,664 bytes free"
 				( $bytes_free ) = $line =~ /.*Dir\(s\)\s+([\d,]+)\s+bytes\s+free/i;
+				print "DEBUG: English pattern result: " . (defined $bytes_free ? $bytes_free : "no match") . "\n";
 
-				# If not found, try Chinese Simplified: "3 个目录 158,915,055,616 可用字节"
+				# If not found, try to extract any large number (10+ digits with commas) from the line
+				# This works regardless of the locale text encoding issues
 				if (!defined $bytes_free || $bytes_free eq '') {
-					( $bytes_free ) = $line =~ /.*个目录\s+([\d,]+)\s+可用字节/;
-					print "DEBUG: Trying Chinese format\n" if (!defined $bytes_free || $bytes_free eq '');
-				}
-
-				# If not found, try Japanese format
-				if (!defined $bytes_free || $bytes_free eq '') {
-					( $bytes_free ) = $line =~ /([\d,]+)\s*バイト/;
-					print "DEBUG: Trying Japanese format\n" if (!defined $bytes_free || $bytes_free eq '');
-				}
-
-				# If not found, try Korean format
-				if (!defined $bytes_free || $bytes_free eq '') {
-					( $bytes_free ) = $line =~ /([\d,]+)\s*사용\s*가능/;
-					print "DEBUG: Trying Korean format\n" if (!defined $bytes_free || $bytes_free eq '');
-				}
-
-				# Generic fallback: match any large number before locale-specific keywords
-				if (!defined $bytes_free || $bytes_free eq '') {
-					( $bytes_free ) = $line =~ /([\d,]{6,})\s+(?:bytes\s+free|可用字节|バイト|사용|가용|空き)/i;
-					print "DEBUG: Trying generic fallback\n" if (!defined $bytes_free || $bytes_free eq '');
+					# Match the last occurrence of a large number in the line
+					# This is typically the "bytes free" value in dir output
+					my @numbers = $line =~ /([\d,]{10,})/g;
+					if (@numbers) {
+						$bytes_free = $numbers[-1];  # Take the last large number
+						print "DEBUG: Extracted large number (locale-independent): '$bytes_free'\n";
+					}
 				}
 
 				if (defined $bytes_free && $bytes_free ne '') {
