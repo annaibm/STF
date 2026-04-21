@@ -754,12 +754,21 @@ sub check_free_space {
 			if ( $line =~ m/.*bytes\s+free.*/ ) {
 				#               3 Dir(s)  214,264,049,664 bytes free
 				print "DEBUG: Found 'bytes free' line: $line";
-				( $bytes_free ) = $line =~ /.*Dir\(s\)\s+(.*)\s+bytes\s+free.*$/;
-				print "DEBUG: Extracted bytes_free: '$bytes_free'\n";
-				$bytes_free =~ s/\,//g;
-				print "DEBUG: After removing commas: '$bytes_free'\n";
-				$kb_free = int ($bytes_free / 1024);
-				print "DEBUG: Calculated kb_free: $kb_free\n";
+				# Use non-greedy match and explicitly match digits and commas
+				( $bytes_free ) = $line =~ /.*Dir\(s\)\s+([\d,]+)\s+bytes\s+free/i;
+				if (defined $bytes_free && $bytes_free ne '') {
+					print "DEBUG: Extracted bytes_free: '$bytes_free'\n";
+					$bytes_free =~ s/\,//g;
+					print "DEBUG: After removing commas: '$bytes_free'\n";
+					if ($bytes_free =~ /^\d+$/) {
+						$kb_free = int ($bytes_free / 1024);
+						print "DEBUG: Calculated kb_free: $kb_free\n";
+					} else {
+						print "DEBUG: WARNING - bytes_free is not a valid number after comma removal: '$bytes_free'\n";
+					}
+				} else {
+					print "DEBUG: WARNING - Failed to extract bytes_free from line\n";
+				}
 			}
 		}
 	}
