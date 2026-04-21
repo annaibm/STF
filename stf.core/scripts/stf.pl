@@ -740,13 +740,9 @@ sub check_free_space {
 		$results_root =~ s,/,\\,g;
 		$results_root =~ s,\\\\,\\,g;
 
-		# Force English output by temporarily switching to code page 437 (US English)
-		# This ensures consistent output format regardless of system locale (MBCS, etc.)
-		# The command: chcp 437 >nul && dir && chcp >nul
-		# - chcp 437 >nul: switch to English code page, suppress output
-		# - dir: run directory command (will now output in English)
-		# - chcp >nul: restore original code page (chcp without args shows current, >nul suppresses)
-		$cmd = "cmd /c \"chcp 437 >nul && dir $results_root && chcp >nul\"";
+		# Try to force English output by switching to code page 437 (US English)
+		# Note: This may not work on all systems due to console encoding restrictions
+		$cmd = "cmd /c \"chcp 437 >nul 2>&1 && dir $results_root 2>&1\"";
 		@df_output = `$cmd 2>&1`;
 
 		# DEBUG: Log the actual dir command output for troubleshooting
@@ -758,11 +754,38 @@ sub check_free_space {
 		print "DEBUG: End of command output\n";
 
 		foreach my $line ( @df_output ) {
-			if ( $line =~ m/.*bytes\s+free.*/ ) {
-				#               3 Dir(s)  214,264,049,664 bytes free
-				print "DEBUG: Found 'bytes free' line: $line";
-				# Use non-greedy match and explicitly match digits and commas
+			# Try to match English format first, then fall back to locale-specific formats
+			# This handles cases where chcp doesn't work or output is still in native locale
+			if ( $line =~ m/.*bytes\s+free.*|.*可用字节.*|.*バイト.*|.*사용.*가능.*/ ) {
+				print "DEBUG: Found bytes/locale-specific line: $line";
+
+				# Try English format: "3 Dir(s)  214,264,049,664 bytes free"
 				( $bytes_free ) = $line =~ /.*Dir\(s\)\s+([\d,]+)\s+bytes\s+free/i;
+
+				# If not found, try Chinese Simplified: "3 个目录 158,915,055,616 可用字节"
+				if (!defined $bytes_free || $bytes_free eq '') {
+					( $bytes_free ) = $line =~ /.*个目录\s+([\d,]+)\s+可用字节/;
+					print "DEBUG: Trying Chinese format\n" if (!defined $bytes_free || $bytes_free eq '');
+				}
+
+				# If not found, try Japanese format
+				if (!defined $bytes_free || $bytes_free eq '') {
+					( $bytes_free ) = $line =~ /([\d,]+)\s*バイト/;
+					print "DEBUG: Trying Japanese format\n" if (!defined $bytes_free || $bytes_free eq '');
+				}
+
+				# If not found, try Korean format
+				if (!defined $bytes_free || $bytes_free eq '') {
+					( $bytes_free ) = $line =~ /([\d,]+)\s*사용\s*가능/;
+					print "DEBUG: Trying Korean format\n" if (!defined $bytes_free || $bytes_free eq '');
+				}
+
+				# Generic fallback: match any large number before locale-specific keywords
+				if (!defined $bytes_free || $bytes_free eq '') {
+					( $bytes_free ) = $line =~ /([\d,]{6,})\s+(?:bytes\s+free|可用字节|バイト|사용|가용|空き)/i;
+					print "DEBUG: Trying generic fallback\n" if (!defined $bytes_free || $bytes_free eq '');
+				}
+
 				if (defined $bytes_free && $bytes_free ne '') {
 					print "DEBUG: Extracted bytes_free: '$bytes_free'\n";
 					$bytes_free =~ s/\,//g;
