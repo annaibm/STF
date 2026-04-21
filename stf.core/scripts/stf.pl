@@ -739,7 +739,14 @@ sub check_free_space {
 		# dir doesn't work with forward slashes or escaped backslashes, so remove any that are there.
 		$results_root =~ s,/,\\,g;
 		$results_root =~ s,\\\\,\\,g;
-		$cmd = "cmd /c dir $results_root";
+
+		# Force English output by temporarily switching to code page 437 (US English)
+		# This ensures consistent output format regardless of system locale (MBCS, etc.)
+		# The command: chcp 437 >nul && dir && chcp >nul
+		# - chcp 437 >nul: switch to English code page, suppress output
+		# - dir: run directory command (will now output in English)
+		# - chcp >nul: restore original code page (chcp without args shows current, >nul suppresses)
+		$cmd = "cmd /c \"chcp 437 >nul && dir $results_root && chcp >nul\"";
 		@df_output = `$cmd 2>&1`;
 
 		# DEBUG: Log the actual dir command output for troubleshooting
