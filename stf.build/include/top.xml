@@ -399,25 +399,29 @@ limitations under the License.
 	</condition>
 
 	<macrodef name="download-file" description="Use curl to download a file">
-		<attribute name="srcurl" description="URL of file to download"/>
-		<attribute name="destdir" description="Directory in which to place the downloaded file"/>
-		<attribute name="destfile" description="File name of the downloaded file"/>
-		<sequential>
-			<echo message="Executing macro download-file"/>
-			<echo message="File to download: @{srcurl}"/>
-			<echo message="Destination: @{destdir}/@{destfile}"/>
-			<echo message="Download tool: curl"/>
-			<mkdir dir="@{destdir}"/>
-			<exec executable="curl" failonerror="true">
-				<env key="_ENCODE_FILE_NEW" value="UNTAGGED"/>
-				<arg value="-L"/>
-				<arg value="--fail"/>
-				<arg value="-o"/>
-				<arg value="@{destdir}/@{destfile}"/>
-				<arg value="@{srcurl}"/>
-			</exec>
-		</sequential>
-	</macrodef>
+        <attribute name="srcurl" description="URL of file to download"/>
+        <attribute name="destdir" description="Directory in which to place the downloaded file"/>
+        <attribute name="destfile" description="File name of the downloaded file"/>
+        <sequential>
+            <echo message="Executing macro download-file"/>
+            <echo message="File to download: @{srcurl}"/>
+            <echo message="Destination: @{destdir}/@{destfile}"/>
+            <echo message="Download tool: curl"/>
+            <mkdir dir="@{destdir}"/>
+            <condition property="cacert.arg" value="--cacert" else="">
+                <isset property="env.CURL_CA_BUNDLE"/>
+            </condition>
+            <exec executable="curl" failonerror="true">
+                <env key="_ENCODE_FILE_NEW" value="UNTAGGED"/>
+                <arg value="-L"/>
+                <arg value="--fail"/>
+                <arg line="${cacert.arg} ${env.CURL_CA_BUNDLE}"/>
+                <arg value="-o"/>
+                <arg value="@{destdir}/@{destfile}"/>
+                <arg value="@{srcurl}"/>
+            </exec>
+        </sequential>
+    </macrodef>
 
 	<!--
 		Verify that a downloaded file matches its expected SHA-256 digest.
