@@ -399,25 +399,69 @@ limitations under the License.
 	</condition>
 
 	<macrodef name="download-file" description="Use curl to download a file">
-		<attribute name="srcurl" description="URL of file to download"/>
-		<attribute name="destdir" description="Directory in which to place the downloaded file"/>
-		<attribute name="destfile" description="File name of the downloaded file"/>
-		<sequential>
-			<echo message="Executing macro download-file"/>
-			<echo message="File to download: @{srcurl}"/>
-			<echo message="Destination: @{destdir}/@{destfile}"/>
-			<echo message="Download tool: curl"/>
-			<mkdir dir="@{destdir}"/>
-			<exec executable="curl" failonerror="true">
-				<env key="_ENCODE_FILE_NEW" value="UNTAGGED"/>
-				<arg value="-L"/>
-				<arg value="--fail"/>
-				<arg value="-o"/>
-				<arg value="@{destdir}/@{destfile}"/>
-				<arg value="@{srcurl}"/>
-			</exec>
-		</sequential>
-	</macrodef>
+        <attribute name="srcurl" description="URL of file to download"/>
+        <attribute name="destdir" description="Directory in which to place the downloaded file"/>
+        <attribute name="destfile" description="File name of the downloaded file"/>
+        <sequential>
+            <echo message="Executing macro download-file"/>
+            <echo message="File to download: @{srcurl}"/>
+            <echo message="Destination: @{destdir}/@{destfile}"/>
+            <echo message="Download tool: curl"/>
+            <mkdir dir="@{destdir}"/>
+            <!-- On z/OS, curl has no system trust store for modern CA roots (e.g. Let's Encrypt).
+                 Append - -cacert automatically using CURL_CA_BUNDLE or known per-node locations. -->
+            <condition property="cacert.file" value="${env.CURL_CA_BUNDLE}">
+                <isset property="env.CURL_CA_BUNDLE"/>
+            </condition>
+            <condition property="cacert.file" value="${user.home}/certs/cacert.pem">
+                <and>
+                    <isset property="isZOS"/>
+                    <not><isset property="cacert.file"/></not>
+                    <available file="${user.home}/certs/cacert.pem"/>
+                </and>
+            </condition>
+            <condition property="cacert.file" value="/rocket/miniconda/ssl/cacert.pem">
+                <and>
+                    <isset property="isZOS"/>
+                    <not><isset property="cacert.file"/></not>
+                    <available file="/rocket/miniconda/ssl/cacert.pem"/>
+                </and>
+            </condition>
+            <condition property="cacert.file" value="/usr/lpp/rsusr/miniconda/ssl/cacert.pem">
+                <and>
+                    <isset property="isZOS"/>
+                    <not><isset property="cacert.file"/></not>
+                    <available file="/usr/lpp/rsusr/miniconda/ssl/cacert.pem"/>
+                </and>
+            </condition>
+            <condition property="cacert.file" value="/u/home/JENKINS/openj9_resources/zopen/etc/pki/tls/certs/cacert.pem">
+                <and>
+                    <isset property="isZOS"/>
+                    <not><isset property="cacert.file"/></not>
+                    <available file="/u/home/JENKINS/openj9_resources/zopen/etc/pki/tls/certs/cacert.pem"/>
+                </and>
+            </condition>
+            <condition property="cacert.file" value="/jenkins/openj9_resources/zopen/etc/pki/tls/certs/cacert.pem">
+                <and>
+                    <isset property="isZOS"/>
+                    <not><isset property="cacert.file"/></not>
+                    <available file="/jenkins/openj9_resources/zopen/etc/pki/tls/certs/cacert.pem"/>
+                </and>
+            </condition>
+            <condition property="curl.cacert.opt" value="--cacert ${cacert.file}" else="">
+                <isset property="cacert.file"/>
+            </condition>
+            <exec executable="curl" failonerror="true">
+                <env key="_ENCODE_FILE_NEW" value="UNTAGGED"/>
+                <arg value="-L"/>
+                <arg value="--fail"/>
+                <arg line="${curl.cacert.opt}"/>
+                <arg value="-o"/>
+                <arg value="@{destdir}/@{destfile}"/>
+                <arg value="@{srcurl}"/>
+            </exec>
+        </sequential>
+    </macrodef>
 
 	<!--
 		Verify that a downloaded file matches its expected SHA-256 digest.
